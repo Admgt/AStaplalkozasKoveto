@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_home"
+        android:icon="@android:drawable/ic_menu_compass"
+        android:title="@string/mainPage" />
+
+    <item
+        android:id="@+id/nav_food_list"
+        android:icon="@drawable/ic_food_list"
+        android:title="@string/foods" />
+
+    <item
+        android:id="@+id/nav_profile"
+        android:icon="@android:drawable/ic_menu_info_details"
+        android:title="@string/profil" />
+</menu>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <EditText
+        android:id="@+id/etFoodName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/food_name" />
+
+    <EditText
+        android:id="@+id/etCalories"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:hint="@string/calorie" />
+
+    <EditText
+        android:id="@+id/etProtein"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:hint="@string/protein" />
+
+    <EditText
+        android:id="@+id/etCarbs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:hint="@string/carbs" />
+
+    <EditText
+        android:id="@+id/etFats"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:hint="@string/fat" />
+
+    <Button
+        android:id="@+id/btnSaveFood"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/save"
+        android:layout_marginTop="20dp"/>
+</LinearLayout>

@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">NutritionTracker</string>
+    <string name="calorie">0 / 2000 kcal</string>
+    <string name="protein">Fehérje: 0g</string>
+    <string name="carbs">Szénhidrát: 0g</string>
+    <string name="fat">Zsír: 0g</string>
+    <string name="mainPage">Kezdőlap</string>
+    <string name="addFood">Étel hozzáadása</string>
+    <string name="profil">Profil</string>
+    <string name="food_name">Étel neve</string>
+    <string name="save">Mentés</string>
+    <string name="foods">Ételek</string>
+    <string name="name">Név</string>
+    <string name="email">Email</string>
+    <string name="daily_calorie">Napi kalóriacél</string>
+    <string name="logout">Kijelentkezés</string>
+    <string name="password">Jelszó</string>
+    <string name="login">Bejelentkezés</string>
+    <string name="nincs_fiok">Még nincs fiókod? Regisztrálj!</string>
+    <string name="register">Register</string>
+    <string name="van_mar_fiok">Already have an account? Login</string>
+    <string name="set_calorie">Kalóriacél beállítása</string>
+</resources>
