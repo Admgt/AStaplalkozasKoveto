@@ -4,13 +4,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
-import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import com.example.nutritiontracker.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationBarView;
@@ -77,30 +75,26 @@ public class MainActivity extends AppCompatActivity {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
         if (user != null) {
-            String userId = user.getUid(); // Bejelentkezett felhasználó azonosítója
+            String userId = user.getUid();
             DocumentReference userRef = db.collection("users").document(userId);
 
             userRef.get().addOnSuccessListener(documentSnapshot -> {
                 if (documentSnapshot.exists()) {
                     int goalCalories = documentSnapshot.getLong("goalCalories").intValue();
 
-                    // Makrotápanyagok kiszámítása (25% fehérje, 50% szénhidrát, 25% zsír)
-                    int protein = (int) ((goalCalories * 0.25) / 4); // 1g fehérje = 4 kcal
-                    int carbs = (int) ((goalCalories * 0.50) / 4);   // 1g szénhidrát = 4 kcal
-                    int fats = (int) ((goalCalories * 0.25) / 9);    // 1g zsír = 9 kcal
+                    int protein = (int) ((goalCalories * 0.25) / 4);
+                    int carbs = (int) ((goalCalories * 0.50) / 4);
+                    int fats = (int) ((goalCalories * 0.25) / 9);
 
-                    // Szövegek beállítása
                     tvCalories.setText("Cél: " + goalCalories + " kcal");
                     tvProtein.setText("Fehérje: " + protein + "g");
                     tvCarbs.setText("Szénhidrát: " + carbs + "g");
                     tvFats.setText("Zsír: " + fats + "g");
 
-                    // ProgressBar frissítése
                     progressCalories.setMax(goalCalories);
-                    progressCalories.setProgress(0); // Kezdetben 0, majd étel hozzáadásával növekszik
+                    progressCalories.setProgress(0);
                 }
             }).addOnFailureListener(e -> {
-                // Hiba esetén logolás vagy hibaüzenet megjelenítése
                 Log.e("Firestore", "Hiba a felhasználói adatok lekérésekor", e);
             });
 
