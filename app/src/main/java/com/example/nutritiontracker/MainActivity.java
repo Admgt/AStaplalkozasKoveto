@@ -2,6 +2,7 @@ package com.example.nutritiontracker;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -13,6 +14,8 @@ import com.example.nutritiontracker.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationBarView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -71,23 +74,38 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadUserData() {
-        String userId = "felhasznalo_id"; // Ezt később be kell állítani az aktuális bejelentkezett felhasználóra
-        DocumentReference userRef = db.collection("users").document(userId);
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
-        userRef.get().addOnSuccessListener(documentSnapshot -> {
-            if (documentSnapshot.exists()) {
-                int calories = documentSnapshot.getLong("calories").intValue();
-                int protein = documentSnapshot.getLong("protein").intValue();
-                int carbs = documentSnapshot.getLong("carbs").intValue();
-                int fats = documentSnapshot.getLong("fats").intValue();
+        if (user != null) {
+            String userId = user.getUid(); // Bejelentkezett felhasználó azonosítója
+            DocumentReference userRef = db.collection("users").document(userId);
 
-                tvCalories.setText(calories + " / 2000 kcal");
-                tvProtein.setText("Feherje: " + protein + "g");
-                tvCarbs.setText("Szénhidrát: " + carbs + "g");
-                tvFats.setText("Zsír: " + fats + "g");
+            userRef.get().addOnSuccessListener(documentSnapshot -> {
+                if (documentSnapshot.exists()) {
+                    int goalCalories = documentSnapshot.getLong("goalCalories").intValue();
 
-                progressCalories.setProgress((calories * 100) / 2000);
-            }
-        });
+                    // Makrotápanyagok kiszámítása (25% fehérje, 50% szénhidrát, 25% zsír)
+                    int protein = (int) ((goalCalories * 0.25) / 4); // 1g fehérje = 4 kcal
+                    int carbs = (int) ((goalCalories * 0.50) / 4);   // 1g szénhidrát = 4 kcal
+                    int fats = (int) ((goalCalories * 0.25) / 9);    // 1g zsír = 9 kcal
+
+                    // Szövegek beállítása
+                    tvCalories.setText("Cél: " + goalCalories + " kcal");
+                    tvProtein.setText("Fehérje: " + protein + "g");
+                    tvCarbs.setText("Szénhidrát: " + carbs + "g");
+                    tvFats.setText("Zsír: " + fats + "g");
+
+                    // ProgressBar frissítése
+                    progressCalories.setMax(goalCalories);
+                    progressCalories.setProgress(0); // Kezdetben 0, majd étel hozzáadásával növekszik
+                }
+            }).addOnFailureListener(e -> {
+                // Hiba esetén logolás vagy hibaüzenet megjelenítése
+                Log.e("Firestore", "Hiba a felhasználói adatok lekérésekor", e);
+            });
+
+        } else {
+            Log.e("FirebaseAuth", "Nincs bejelentkezett felhasználó!");
+        }
     }
 }
