@@ -12,9 +12,15 @@ import java.util.List;
 
 public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder> {
     private List<FoodItem> foodList;
+    private OnFoodClickListener listener;
 
-    public FoodAdapter(List<FoodItem> foodList) {
+    public interface OnFoodClickListener {
+        void onFoodClick(FoodItem food);
+    }
+
+    public FoodAdapter(List<FoodItem> foodList, OnFoodClickListener listener) {
         this.foodList = foodList;
+        this.listener = listener;
     }
 
     @NonNull
@@ -30,6 +36,12 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
         holder.tvFoodName.setText(food.getName());
         holder.tvCalories.setText("Kalória: " + food.getCalories());
         holder.tvMacros.setText("Feh: " + food.getProtein() + "g, CH: " + food.getCarbs() + "g, Zsír: " + food.getFats() + "g");
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onFoodClick(food);
+            }
+        });
     }
 
     @Override

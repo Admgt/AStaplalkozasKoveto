@@ -27,10 +27,23 @@
         android:max="100"
         android:layout_marginHorizontal="20dp" />
 
+    <TextView
+        android:id="@+id/tvWarning"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/kaloria_tullepes"
+        android:textColor="@android:color/holo_red_dark"
+        android:visibility="gone"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginTop="16dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_below="@id/progressCalories"/>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/progressCalories"
+        android:layout_below="@id/tvWarning"
         android:layout_marginTop="20dp"
         android:orientation="horizontal"
         android:gravity="center">

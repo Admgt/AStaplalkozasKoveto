@@ -21,4 +21,5 @@
     <string name="van_mar_fiok">Already have an account? Login</string>
     <string name="set_calorie">Kalóriacél beállítása</string>
     <string name="todo">TODO</string>
+    <string name="kaloria_tullepes">Túllépted a napi kalóriacélt!</string>
 </resources>

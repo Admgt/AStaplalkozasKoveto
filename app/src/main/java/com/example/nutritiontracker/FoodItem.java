@@ -1,6 +1,8 @@
 package com.example.nutritiontracker;
 
-public class FoodItem {
+import java.io.Serializable;
+
+public class FoodItem implements Serializable {
     private String name;
     private int calories;
     private double protein, carbs, fats;
