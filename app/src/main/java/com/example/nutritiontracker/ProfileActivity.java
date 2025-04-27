@@ -50,9 +50,11 @@ public class ProfileActivity extends AppCompatActivity {
                 int itemId = item.getItemId();
                 if (itemId == R.id.nav_home) {
                     startActivity(new Intent(ProfileActivity.this, MainActivity.class));
+                    finish();
                     return true;
                 } else if (itemId == R.id.nav_food_list) {
                     startActivity(new Intent(ProfileActivity.this, FoodListActivity.class));
+                    finish();
                     return true;
                 } else return itemId == R.id.nav_profile;
             }
@@ -63,6 +65,8 @@ public class ProfileActivity extends AppCompatActivity {
             loadUserData();
         } else {
             Toast.makeText(this, "Hiba: nincs bejelentkezett felhasználó!", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);
+            startActivity(intent);
             finish();
         }
 
@@ -111,8 +115,18 @@ public class ProfileActivity extends AppCompatActivity {
         DocumentReference userRef = db.collection("users").document(user.getUid());
         userRef.update("goalCalories", goalCalories).addOnSuccessListener(aVoid -> {
             Toast.makeText(this, "Kalóriacél mentve!", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(ProfileActivity.this, MainActivity.class));
+            finish();
         }).addOnFailureListener(e -> {
             Toast.makeText(this, "Hiba történt a mentéskor!", Toast.LENGTH_SHORT).show();
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        auth = null;
+        db = null;
+        user = null;
     }
 }

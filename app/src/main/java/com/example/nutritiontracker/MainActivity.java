@@ -1,16 +1,22 @@
 package com.example.nutritiontracker;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationBarView;
@@ -18,30 +24,56 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
-
-    private static final int REQUEST_CODE_FOOD = 1;
     private TextView tvCalories, tvProtein, tvCarbs, tvFats;
     private TextView tvWarning;
     private ProgressBar progressCalories;
     private FloatingActionButton btnAddFood;
     private FirebaseFirestore db;
+    private FirebaseUser user;
+    private RecyclerView recyclerView;
+    private ConsumedFoodAdapter adapter;
+    private List<FoodItem> consumedFoods;
+    private List<String> documentIds;
 
     private int dailyCaloriesGoal = 2000;
     private int consumedCalories = 0;
     private double consumedProtein = 0.0;
     private double consumedCarbs = 0.0;
     private double consumedFats = 0.0;
+    private String currentDate;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        getSharedPreferences("nutrition_data", MODE_PRIVATE).edit().clear().apply();
-
         db = FirebaseFirestore.getInstance();
+        user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user == null) {
+            startActivity(new Intent(MainActivity.this, LoginActivity.class));
+            finish();
+            return;
+        }
+
+        currentDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+        recyclerView = findViewById(R.id.recyclerViewConsumedFoods);
+        consumedFoods = new ArrayList<>();
+        documentIds = new ArrayList<>();
+        adapter = new ConsumedFoodAdapter(consumedFoods, documentIds);
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         bottomNav.setSelectedItemId(R.id.nav_home);
@@ -52,8 +84,7 @@ public class MainActivity extends AppCompatActivity {
                 if (itemId == R.id.nav_home) {
                     return true;
                 } else if (itemId == R.id.nav_food_list) {
-                    Intent intent = new Intent(MainActivity.this, FoodListActivity.class);
-                    startActivityForResult(intent, REQUEST_CODE_FOOD);
+                    startActivity(new Intent(MainActivity.this, FoodListActivity.class));
                     return true;
                 } else if (itemId == R.id.nav_profile) {
                     startActivity(new Intent(MainActivity.this, ProfileActivity.class));
@@ -71,93 +102,149 @@ public class MainActivity extends AppCompatActivity {
         btnAddFood = findViewById(R.id.btnAddFood);
         tvWarning = findViewById(R.id.tvWarning);
 
-        btnAddFood.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, AddFoodActivity.class);
-            startActivityForResult(intent, REQUEST_CODE_FOOD);
-        });
+        btnAddFood.setOnClickListener(v -> showAddFoodDialog());
 
         loadUserData();
-        loadSavedNutritionData();
-        updateNutritionDisplay();
+        loadConsumedFoods();
     }
 
     private void loadUserData() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        String userId = user.getUid();
+        DocumentReference userRef = db.collection("users").document(userId);
 
-        if (user != null) {
-            String userId = user.getUid();
-            DocumentReference userRef = db.collection("users").document(userId);
+        userRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                Long goalCaloriesLong = documentSnapshot.getLong("goalCalories");
+                if (goalCaloriesLong != null) {
+                    dailyCaloriesGoal = goalCaloriesLong.intValue();
+                } else {
+                    userRef.update("goalCalories", dailyCaloriesGoal)
+                            .addOnSuccessListener(aVoid -> Log.d("Firestore", "Alapértelmezett goalCalories beállítva"))
+                            .addOnFailureListener(e -> Log.e("Firestore", "Hiba a goalCalories beállításakor", e));
+                }
 
-            userRef.get().addOnSuccessListener(documentSnapshot -> {
-                if (documentSnapshot.exists()) {
-                    Long goalCaloriesLong = documentSnapshot.getLong("goalCalories");
-                    if (goalCaloriesLong != null) {
-                        dailyCaloriesGoal = goalCaloriesLong.intValue();
-                    } else {
-                        userRef.update("goalCalories", dailyCaloriesGoal)
-                                .addOnSuccessListener(aVoid -> Log.d("Firestore", "Alapértelmezett goalCalories beállítva"))
-                                .addOnFailureListener(e -> Log.e("Firestore", "Hiba a goalCalories beállításakor", e));
+                progressCalories.setMax(dailyCaloriesGoal);
+                loadDailyConsumption();
+            }
+        }).addOnFailureListener(e -> {
+            Log.e("Firestore", "Hiba a felhasználói adatok lekérésekor", e);
+            Toast.makeText(MainActivity.this, "Hiba a felhasználói adatok lekérésekor", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private void showAddFoodDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_edit_food, null);
+
+        EditText etName = dialogView.findViewById(R.id.etFoodName);
+        EditText etCalories = dialogView.findViewById(R.id.etCalories);
+        EditText etProtein = dialogView.findViewById(R.id.etProtein);
+        EditText etCarbs = dialogView.findViewById(R.id.etCarbs);
+        EditText etFats = dialogView.findViewById(R.id.etFats);
+
+        builder.setView(dialogView)
+                .setTitle("Új étel hozzáadása")
+                .setPositiveButton("Mentés", (dialog, id) -> {
+                    if (etName.getText().toString().trim().isEmpty() ||
+                            etCalories.getText().toString().trim().isEmpty()) {
+                        Toast.makeText(this, "Kérlek töltsd ki a kötelező mezőket", Toast.LENGTH_SHORT).show();
+                        return;
                     }
 
-                    double proteinGoal = (dailyCaloriesGoal * 0.25) / 4.0;
-                    double carbsGoal = (dailyCaloriesGoal * 0.50) / 4.0;
-                    double fatsGoal = (dailyCaloriesGoal * 0.25) / 9.0;
+                    FoodItem newFood = new FoodItem();
+                    newFood.setName(etName.getText().toString().trim());
+                    newFood.setCalories(Integer.parseInt(etCalories.getText().toString().trim()));
 
-                    tvCalories.setText("Cél: " + dailyCaloriesGoal + " kcal");
-                    progressCalories.setMax(dailyCaloriesGoal);
-                    updateNutritionDisplay();
-                }
-            }).addOnFailureListener(e -> {
-                Log.e("Firestore", "Hiba a felhasználói adatok lekérésekor", e);
-            });
+                    if (!etProtein.getText().toString().isEmpty()) {
+                        newFood.setProtein(Double.parseDouble(etProtein.getText().toString().trim()));
+                    }
 
-        } else {
-            Log.e("FirebaseAuth", "Nincs bejelentkezett felhasználó!");
-        }
+                    if (!etCarbs.getText().toString().isEmpty()) {
+                        newFood.setCarbs(Double.parseDouble(etCarbs.getText().toString().trim()));
+                    }
+
+                    if (!etFats.getText().toString().isEmpty()) {
+                        newFood.setFats(Double.parseDouble(etFats.getText().toString().trim()));
+                    }
+
+                    db.collection("FoodItems")
+                            .add(newFood)
+                            .addOnSuccessListener(documentReference -> {
+                                Toast.makeText(MainActivity.this, "Étel sikeresen hozzáadva", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(MainActivity.this, "Hiba az étel mentése közben", Toast.LENGTH_SHORT).show();
+                            });
+                })
+                .setNegativeButton("Mégse", (dialog, id) -> dialog.dismiss());
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
 
-        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
-        bottomNav.setSelectedItemId(R.id.nav_home);
+    private void loadDailyConsumption() {
+        consumedCalories = 0;
+        consumedProtein = 0.0;
+        consumedCarbs = 0.0;
+        consumedFats = 0.0;
 
-        if (requestCode == REQUEST_CODE_FOOD && resultCode == RESULT_OK && data != null) {
-            FoodItem selectedFood = (FoodItem) data.getSerializableExtra("selectedFood");
-            if (selectedFood != null) {
-                addFoodToTotals(selectedFood);
-                Toast.makeText(this, selectedFood.getName() + " hozzáadva", Toast.LENGTH_SHORT).show();
-            }
-        }
+        String userId = user.getUid();
+
+        db.collection("users").document(userId)
+                .collection("dailyConsumption").document(currentDate)
+                .collection("consumedFoods")
+                .addSnapshotListener((value, error) -> {
+                    if (error != null) {
+                        Log.e("Firestore", "Error getting daily consumption", error);
+                        return;
+                    }
+
+                    if (value != null) {
+                        consumedCalories = 0;
+                        consumedProtein = 0.0;
+                        consumedCarbs = 0.0;
+                        consumedFats = 0.0;
+
+                        for (QueryDocumentSnapshot doc : value) {
+                            FoodItem food = doc.toObject(FoodItem.class);
+                            consumedCalories += food.getCalories();
+                            consumedProtein += food.getProtein();
+                            consumedCarbs += food.getCarbs();
+                            consumedFats += food.getFats();
+                        }
+
+                        updateNutritionDisplay();
+                    }
+                });
     }
 
-    private void addFoodToTotals(FoodItem food) {
-        consumedCalories += food.getCalories();
-        consumedProtein += food.getProtein();
-        consumedCarbs += food.getCarbs();
-        consumedFats += food.getFats();
+    private void loadConsumedFoods() {
+        String userId = user.getUid();
 
-        saveNutritionData();
-        updateNutritionDisplay();
-    }
+        db.collection("users")
+                .document(userId)
+                .collection("dailyConsumption")
+                .document(currentDate)
+                .collection("consumedFoods")
+                .addSnapshotListener((queryDocumentSnapshots, e) -> {
+                    if (e != null) {
+                        Log.e("Firestore", "Hiba: ", e);
+                        Toast.makeText(MainActivity.this, "Hiba az adatok lekérésekor", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
 
-    private void saveNutritionData() {
-        getSharedPreferences("nutrition_data", MODE_PRIVATE)
-                .edit()
-                .putInt("calories", consumedCalories)
-                .putFloat("protein", (float) consumedProtein)
-                .putFloat("carbs", (float) consumedCarbs)
-                .putFloat("fats", (float) consumedFats)
-                .apply();
-    }
+                    consumedFoods.clear();
 
-    private void loadSavedNutritionData() {
-        var prefs = getSharedPreferences("nutrition_data", MODE_PRIVATE);
-        consumedCalories = prefs.getInt("calories", 0);
-        consumedProtein = prefs.getFloat("protein", 0f);
-        consumedCarbs = prefs.getFloat("carbs", 0f);
-        consumedFats = prefs.getFloat("fats", 0f);
+                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        FoodItem food = doc.toObject(FoodItem.class);
+                        food.setId(doc.getId());
+                        consumedFoods.add(food);
+                    }
+
+                    adapter.notifyDataSetChanged();
+                });
     }
 
     private void updateNutritionDisplay() {
@@ -172,6 +259,14 @@ public class MainActivity extends AppCompatActivity {
             tvWarning.setVisibility(View.VISIBLE);
         } else {
             tvWarning.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (user != null) {
+            loadUserData();
         }
     }
 }

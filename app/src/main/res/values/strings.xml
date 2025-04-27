@@ -22,4 +22,14 @@
     <string name="set_calorie">Kalóriacél beállítása</string>
     <string name="todo">TODO</string>
     <string name="kaloria_tullepes">Túllépted a napi kalóriacélt!</string>
+    <string name="add_new_food">Add new food</string>
+    <string name="_200_kcal">200 kcal</string>
+    <string name="p_20g_c_30g_f_10g">P: 20g | C: 30g | F: 10g</string>
+    <string name="edit_food">Edit food</string>
+    <string name="delete_food">Delete food</string>
+    <string name="add">Add</string>
+    <string name="calories_kcal">Calories (kcal)</string>
+    <string name="protein_g">Protein (g)</string>
+    <string name="carbs_g">Carbs (g)</string>
+    <string name="fats_g">Fats (g)</string>
 </resources>
