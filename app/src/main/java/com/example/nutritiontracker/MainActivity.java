@@ -1,7 +1,15 @@
 package com.example.nutritiontracker;
 
+import android.Manifest;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,6 +22,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -28,6 +38,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -43,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
     private ConsumedFoodAdapter adapter;
     private List<FoodItem> consumedFoods;
     private List<String> documentIds;
-
     private int dailyCaloriesGoal = 2000;
     private int consumedCalories = 0;
     private double consumedProtein = 0.0;
@@ -66,6 +76,10 @@ public class MainActivity extends AppCompatActivity {
             finish();
             return;
         }
+
+        createNotificationChannel();
+        askNotificationPermission();
+        scheduleReminderNotification();
 
         currentDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
         recyclerView = findViewById(R.id.recyclerViewConsumedFoods);
@@ -106,6 +120,26 @@ public class MainActivity extends AppCompatActivity {
 
         loadUserData();
         loadConsumedFoods();
+    }
+
+    private void askNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1);
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Értesítések engedélyezve", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Értesítések le vannak tiltva", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void loadUserData() {
@@ -261,6 +295,84 @@ public class MainActivity extends AppCompatActivity {
             tvWarning.setVisibility(View.GONE);
         }
     }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "Éves Értesítő Csatorna";
+            String description = "Napi emlékeztető értesítések";
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel channel = new NotificationChannel("eves_ertesito", name, importance);
+            channel.setDescription(description);
+
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    private void scheduleReminderNotification() {
+        if (!canScheduleExactAlarms()) {
+            Toast.makeText(this, "Pontos értesítések engedélyezése szükséges", Toast.LENGTH_LONG).show();
+            requestExactAlarmPermission();
+            return;
+        }
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, AlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                this,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.set(Calendar.HOUR_OF_DAY, 14);
+        calendar.set(Calendar.MINUTE, 44);
+        calendar.set(Calendar.SECOND, 0);
+
+        if (calendar.getTimeInMillis() <= System.currentTimeMillis()) {
+            calendar.add(Calendar.DAY_OF_YEAR, 1);
+        }
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        calendar.getTimeInMillis(),
+                        pendingIntent
+                );
+            } else {
+                alarmManager.setExact(
+                        AlarmManager.RTC_WAKEUP,
+                        calendar.getTimeInMillis(),
+                        pendingIntent
+                );
+            }
+
+            Toast.makeText(this, "Emlékeztető beállítva " + calendar.getTime().toString(), Toast.LENGTH_SHORT).show();
+        } catch (SecurityException e) {
+            Toast.makeText(this, "Értesítés jogosultság hiányzik. Kérlek engedélyezd a beállításokban.", Toast.LENGTH_LONG).show();
+            Log.e("AlarmScheduler", "SecurityException when scheduling alarm", e);
+            requestExactAlarmPermission();
+        }
+    }
+
+    private boolean canScheduleExactAlarms() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            return alarmManager.canScheduleExactAlarms();
+        }
+        return true;
+    }
+
+    private void requestExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            Intent intent = new Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+            startActivity(intent);
+        }
+    }
+
 
     @Override
     protected void onResume() {

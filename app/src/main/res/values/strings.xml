@@ -32,4 +32,6 @@
     <string name="protein_g">Protein (g)</string>
     <string name="carbs_g">Carbs (g)</string>
     <string name="fats_g">Fats (g)</string>
+    <string name="profilk_p">Profilkép</string>
+    <string name="profilk_p_kiv_laszt_sa">Profilkép kiválasztása</string>
 </resources>
