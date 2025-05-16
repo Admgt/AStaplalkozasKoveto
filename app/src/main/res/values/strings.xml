@@ -34,4 +34,15 @@
     <string name="fats_g">Fats (g)</string>
     <string name="profilk_p">Profilkép</string>
     <string name="profilk_p_kiv_laszt_sa">Profilkép kiválasztása</string>
+    <string name="statisztika">Statisztika</string>
+    <string name="tel_statisztik_k">Étel Statisztikák</string>
+    <string name="top_10_magas_kal_riatartalm_tel">TOP 10 magas kalóriatartalmú étel</string>
+    <string name="top_10_magas_feh_rjetartalm_tel">TOP 10 magas fehérjetartalmú étel</string>
+    <string name="top_10_alacsony_zs_rtartalm_tel">TOP 10 alacsony zsírtartalmú étel</string>
+    <string name="tel_neve">Étel neve</string>
+    <string name="_500_kcal">500 kcal</string>
+    <string name="_20g_feh_rje">20g fehérje</string>
+    <string name="_30g_sz_nhidr_t">30g szénhidrát</string>
+    <string name="_10g_zs_r">10g zsír</string>
+    <string name="vissza" />
 </resources>

@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -88,6 +89,11 @@ public class MainActivity extends AppCompatActivity {
         adapter = new ConsumedFoodAdapter(consumedFoods, documentIds);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        Button btnOpenStats = findViewById(R.id.btnOpenStats);
+        btnOpenStats.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, TopFoodsActivity.class);
+            startActivity(intent);
+        });
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         bottomNav.setSelectedItemId(R.id.nav_home);

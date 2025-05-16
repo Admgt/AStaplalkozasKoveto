@@ -106,6 +106,15 @@
         android:padding="8dp"
         tools:listitem="@layout/item_consumed_food" />
 
+    <Button
+        android:id="@+id/btnOpenStats"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/statisztika"
+        android:layout_above="@id/btnAddFood"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="16dp"/>
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnAddFood"
         android:layout_width="wrap_content"
