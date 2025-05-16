@@ -32,7 +32,6 @@ public class StatsFoodAdapter extends RecyclerView.Adapter<StatsFoodAdapter.View
 
         holder.tvFoodName.setText(foodItem.getName());
 
-        // Részletek összeállítása
         StringBuilder details = new StringBuilder();
         details.append("Kalória: ").append(foodItem.getCalories()).append(" kcal");
 

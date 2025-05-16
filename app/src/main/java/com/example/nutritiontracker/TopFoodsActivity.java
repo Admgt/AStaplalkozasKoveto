@@ -47,13 +47,11 @@ public class TopFoodsActivity extends AppCompatActivity {
 
         db = FirebaseFirestore.getInstance();
 
-        // UI elemek inicializálása
         tvActivityTitle = findViewById(R.id.tvActivityTitle);
         tvHighCalorieTitle = findViewById(R.id.tvHighCalorieTitle);
         tvHighProteinTitle = findViewById(R.id.tvHighProteinTitle);
         tvLowFatTitle = findViewById(R.id.tvLowFatTitle);
 
-        // Vissza gomb inicializálása
         btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(v -> finish());
 
@@ -65,21 +63,18 @@ public class TopFoodsActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerViews() {
-        // Magas kalóriatartalmú ételek beállítása
         recyclerViewHighCalorie = findViewById(R.id.recyclerViewHighCalorie);
         recyclerViewHighCalorie.setLayoutManager(new LinearLayoutManager(this));
         highCalorieFoods = new ArrayList<>();
         highCalorieAdapter = new StatsFoodAdapter(highCalorieFoods);
         recyclerViewHighCalorie.setAdapter(highCalorieAdapter);
 
-        // Magas fehérjetartalmú ételek beállítása
         recyclerViewHighProtein = findViewById(R.id.recyclerViewHighProtein);
         recyclerViewHighProtein.setLayoutManager(new LinearLayoutManager(this));
         highProteinFoods = new ArrayList<>();
         highProteinAdapter = new StatsFoodAdapter(highProteinFoods);
         recyclerViewHighProtein.setAdapter(highProteinAdapter);
 
-        // Alacsony zsírtartalmú ételek beállítása
         recyclerViewLowFat = findViewById(R.id.recyclerViewLowFat);
         recyclerViewLowFat.setLayoutManager(new LinearLayoutManager(this));
         lowFatFoods = new ArrayList<>();
