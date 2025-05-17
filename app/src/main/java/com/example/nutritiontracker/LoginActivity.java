@@ -39,7 +39,7 @@ public class LoginActivity extends AppCompatActivity {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("test").add(new HashMap<>())
                 .addOnSuccessListener(documentReference ->
-                        Log.e("FirebaseTest", "Kapcsolat sikeres!")
+                        Log.i("FirebaseTest", "Kapcsolat sikeres!")
                 )
                 .addOnFailureListener(e ->
                         Log.e("FirebaseTest", "Hiba: " + e.getMessage())
